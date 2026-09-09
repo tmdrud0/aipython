@@ -1,0 +1,8 @@
+# Sakila 덤프 (fetch_sakila.ps1 로 재생성)
+docker/initdb/01-schema.sql
+docker/initdb/02-data.sql
+
+.venv/
+__pycache__/
+*.pyc
+.env

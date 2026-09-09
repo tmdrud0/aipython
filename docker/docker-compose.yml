@@ -1,0 +1,31 @@
+services:
+  sakila:
+    image: mysql:8.4
+    container_name: t2s-sakila
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpw
+      TZ: Asia/Seoul
+    # MYSQL_DATABASE 를 일부러 두지 않는다.
+    # 01-schema.sql 이 DROP SCHEMA / CREATE SCHEMA sakila 를 직접 수행한다.
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --max-execution-time=10000
+    ports:
+      # 3306 = 로컬 MySQL80, 3307/3308 = 다른 프로젝트 컨테이너가 선점
+      - "3310:3306"
+    volumes:
+      # 볼륨이 비어 있을 때만 01 -> 02 -> 03 순서로 자동 실행된다.
+      # 재적재: docker compose down -v
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+      - sakila-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpw"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
+
+volumes:
+  sakila-data:
