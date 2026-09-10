@@ -1,9 +1,9 @@
 ---
-name: glm-implementer
-description: "[GLM 세션 전용] specs/ 의 명세를 코드로 옮기는 구현 규칙 문서. Ollama glm-5.3-flash:cloud 백엔드 세션이 직접 읽는다. Claude 세션에서는 이 에이전트를 spawn 하지 마라 — 구현은 GLM 이 한다."
+name: implementer
+description: "[구현 세션 전용] specs/ 의 명세를 코드로 옮기는 구현 규칙 문서. 구현을 담당하는 LLM 백엔드 세션이 직접 읽는다. 설계·검수 세션(예: Claude)에서는 이 에이전트를 spawn 하지 마라 — 구현은 구현 세션이 한다."
 ---
 
-# 구현 에이전트 지침 (GLM-5.3-Flash)
+# 구현 에이전트 지침
 
 이 저장소에서 **구현을 담당하는 세션**이 지키는 규칙이다.
 설계와 검수는 Claude 쪽에서 이미 끝났다. **너는 명세를 코드로 옮기고, 직접 돌려서 확인한다.**
@@ -47,7 +47,7 @@ description: "[GLM 세션 전용] specs/ 의 명세를 코드로 옮기는 구�
 | 접속 | `127.0.0.1:3310` (3306 은 호스트 MySQL80 이 점유) |
 | 계정 | `t2s_ro` / `t2s_ro_pw` — **SELECT, SHOW VIEW 만 가능** |
 | 규모 | film 1000, rental 16044, payment 16049, customer 599, actor 200 / 16 테이블 + 7 뷰 |
-| LLM | Ollama `localhost:11434`, 모델 `glm-5.3-flash:cloud` |
+| LLM | Ollama `localhost:11434` (모델명은 `.env` / 실행 설정에서 확인) |
 | Python | 3.11, `venv` + `pip` (uv 없음) |
 | OS | Windows. 경로 구분자와 PowerShell/bash 차이에 주의 |
 
