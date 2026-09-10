@@ -77,3 +77,93 @@ def classify(
     if got_rows == item.expect_rows:
         return "pass"
     return "wrong_rows"
+
+
+SQL_PREVIEW_LIMIT: int = 200
+ROWS_PREVIEW_LIMIT: int = 3
+
+
+def compact_sql(sql: str, limit: int = SQL_PREVIEW_LIMIT) -> str:
+    s = " ".join(sql.split())
+    if len(s) <= limit:
+        return s
+    return s[:limit] + "..."
+
+
+def format_rows(
+    rows: tuple[tuple[str, ...], ...] | None,
+    limit: int = ROWS_PREVIEW_LIMIT,
+) -> str:
+    if rows is None:
+        return "None"
+    parts = ["(" + ", ".join(row) + ")" for row in rows[:limit]]
+    body = ", ".join(parts)
+    if len(rows) > limit:
+        body += ", ..."
+    return f"{len(rows)}행 [{body}]"
+
+
+def describe_failure(
+    outcome: str,
+    item: GoldenItem,
+    got_kind: str | None,
+    got_rows: tuple[tuple[str, ...], ...] | None,
+    sql: str,
+    error: str,
+) -> str:
+    if outcome == "pass":
+        return ""
+    if outcome == "wrong_rows":
+        return f"expect={format_rows(item.expect_rows)} got={format_rows(got_rows)} | sql={compact_sql(sql)}"
+    if outcome == "llm_error":
+        return error
+    if outcome in ("guard_block", "db_error", "guard_saved"):
+        return f"{error} | sql={compact_sql(sql)}"
+    if outcome == "no_sql":
+        return f"kind={got_kind}"
+    if sql != "":
+        return f"sql={compact_sql(sql)}"
+    return f"kind={got_kind}"
+
+
+@dataclass(frozen=True)
+class Summary:
+    items: int
+    trials: int
+    passed_trials: int
+    stable_items: int
+    outcome_counts: tuple[tuple[str, int], ...]
+    unstable: tuple[tuple[str, int, int], ...]
+
+
+def summarize(results: tuple[tuple[str, tuple[str, ...]], ...]) -> Summary:
+    if not results:
+        return Summary(0, 0, 0, 0, (), ())
+
+    items = len(results)
+    trials = sum(len(outcomes) for _, outcomes in results)
+    passed_trials = sum(
+        1 for _, outcomes in results for outcome in outcomes if outcome == "pass"
+    )
+    stable_items = sum(
+        1 for _, outcomes in results if len(outcomes) > 0 and all(o == "pass" for o in outcomes)
+    )
+
+    counts: dict[str, int] = {}
+    for _, outcomes in results:
+        for outcome in outcomes:
+            counts[outcome] = counts.get(outcome, 0) + 1
+    order = {outcome: index for index, outcome in enumerate(OUTCOMES)}
+    present = [outcome for outcome in OUTCOMES if counts.get(outcome, 0) > 0]
+    outcome_counts = tuple(
+        (outcome, counts[outcome])
+        for outcome in sorted(present, key=lambda o: (-counts[o], order[o]))
+    )
+
+    unstable = tuple(
+        (item_id, sum(1 for o in outcomes if o == "pass"), len(outcomes))
+        for item_id, outcomes in results
+        if not (len(outcomes) > 0 and all(o == "pass" for o in outcomes))
+    )
+
+    return Summary(items, trials, passed_trials, stable_items, outcome_counts, unstable)
