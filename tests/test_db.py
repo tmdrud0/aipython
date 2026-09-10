@@ -3,8 +3,18 @@ import inspect
 import pytest
 
 from t2s.config import ConfigError, Settings, load_settings
-from t2s.db import ColumnInfo, QueryError, QueryResult, connect, fetch_schema, run_query
+from t2s.db import (
+    ColumnInfo,
+    ForeignKey,
+    QueryError,
+    QueryResult,
+    connect,
+    fetch_foreign_keys,
+    fetch_schema,
+    run_query,
+)
 from t2s.guard import UnsafeSQLError
+from t2s.schema import render_schema
 
 
 @pytest.fixture(scope="module")
@@ -135,6 +145,7 @@ def test_fetch_schema_first_row_is_actor_id(settings):
         table_type="BASE TABLE",
         column_name="actor_id",
         data_type="int",
+        column_type="int unsigned",
         is_nullable=False,
         column_key="PRI",
     )
@@ -196,3 +207,150 @@ def test_fetch_schema_signature_has_no_sql_parameter():
 # 23
 def test_run_query_signature_no_bypass_parameters():
     assert list(inspect.signature(run_query).parameters) == ["sql", "settings", "max_rows"]
+
+
+# 004 #3
+def test_fetch_schema_film_rating_data_type_vs_column_type(settings):
+    match = [
+        c
+        for c in fetch_schema(settings)
+        if c.table_name == "film" and c.column_name == "rating"
+    ]
+    assert len(match) == 1
+    assert match[0].data_type == "enum"
+    assert match[0].column_type == "enum('G','PG','PG-13','R','NC-17')"
+
+
+# 004 #4
+def test_fetch_schema_film_special_features_set_values(settings):
+    match = [
+        c
+        for c in fetch_schema(settings)
+        if c.table_name == "film" and c.column_name == "special_features"
+    ]
+    assert len(match) == 1
+    assert match[0].column_type == "set('Trailers','Commentaries','Deleted Scenes','Behind the Scenes')"
+
+
+# 004 #5
+def test_fetch_schema_customer_active_tinyint(settings):
+    match = [
+        c
+        for c in fetch_schema(settings)
+        if c.table_name == "customer" and c.column_name == "active"
+    ]
+    assert len(match) == 1
+    assert match[0].data_type == "tinyint"
+    assert match[0].column_type == "tinyint(1)"
+
+
+# 004 #6
+def test_fetch_schema_film_length_smallint_unsigned(settings):
+    match = [
+        c
+        for c in fetch_schema(settings)
+        if c.table_name == "film" and c.column_name == "length"
+    ]
+    assert len(match) == 1
+    assert match[0].column_type == "smallint unsigned"
+
+
+# 004 #7
+def test_fetch_foreign_keys_total_count(settings):
+    assert len(fetch_foreign_keys(settings)) == 22
+
+
+# 004 #8
+def test_fetch_foreign_keys_first_row(settings):
+    expected = ForeignKey(
+        table_name="address",
+        column_name="city_id",
+        referenced_table="city",
+        referenced_column="city_id",
+    )
+    assert fetch_foreign_keys(settings)[0] == expected
+
+
+# 004 #9
+def test_fetch_foreign_keys_film_two_language_references(settings):
+    match = [fk for fk in fetch_foreign_keys(settings) if fk.table_name == "film"]
+    assert len(match) == 2
+    assert {fk.column_name for fk in match} == {"language_id", "original_language_id"}
+    assert all(fk.referenced_table == "language" for fk in match)
+
+
+# 004 #10
+def test_fetch_foreign_keys_signature_has_no_sql_parameter():
+    assert list(inspect.signature(fetch_foreign_keys).parameters) == ["settings"]
+
+
+# 004 #11
+def test_fetch_foreign_keys_returns_tuple_of_foreign_key(settings):
+    result = fetch_foreign_keys(settings)
+    assert isinstance(result, tuple)
+    assert all(isinstance(fk, ForeignKey) for fk in result)
+
+
+# 004 #12
+def test_render_schema_with_live_data_default(settings):
+    text = render_schema(fetch_schema(settings), fetch_foreign_keys(settings))
+    assert len(text) == 2549
+    assert len(text.splitlines()) == 17
+
+
+# 004 #13
+def test_render_schema_with_live_data_include_views(settings):
+    text = render_schema(
+        fetch_schema(settings), fetch_foreign_keys(settings), include_views=True
+    )
+    assert len(text) == 3503
+    assert len(text.splitlines()) == 24
+
+
+# 004 #14
+def test_render_schema_first_line_is_header(settings):
+    text = render_schema(fetch_schema(settings), fetch_foreign_keys(settings))
+    assert text.splitlines()[0] == "# schema: sakila (MySQL 8.4)"
+
+
+# 004 #15
+def test_render_schema_last_line_is_store(settings):
+    text = render_schema(fetch_schema(settings), fetch_foreign_keys(settings))
+    assert text.splitlines()[-1] == (
+        "TABLE store(store_id INT PK, manager_staff_id INT -> staff.staff_id, "
+        "address_id INT -> address.address_id, last_update TIMESTAMP)"
+    )
+
+
+# 004 #16
+def test_render_schema_film_actor_line(settings):
+    text = render_schema(fetch_schema(settings), fetch_foreign_keys(settings))
+    match = [line for line in text.splitlines() if line.startswith("TABLE film_actor(")]
+    assert len(match) == 1
+    assert match[0] == (
+        "TABLE film_actor(actor_id INT PK -> actor.actor_id, "
+        "film_id INT PK -> film.film_id, last_update TIMESTAMP)"
+    )
+
+
+# 004 #17
+def test_render_schema_film_line(settings):
+    text = render_schema(fetch_schema(settings), fetch_foreign_keys(settings))
+    match = [line for line in text.splitlines() if line.startswith("TABLE film(")]
+    assert len(match) == 1
+    assert match[0] == (
+        "TABLE film(film_id INT PK, title VARCHAR(255), description TEXT, "
+        "release_year YEAR, language_id INT -> language.language_id, "
+        "original_language_id INT -> language.language_id, "
+        "rental_duration TINYINT, rental_rate DECIMAL(4,2), length SMALLINT, "
+        "replacement_cost DECIMAL(5,2), "
+        "rating ENUM('G','PG','PG-13','R','NC-17'), "
+        "special_features SET('Trailers','Commentaries','Deleted Scenes','Behind the Scenes'), "
+        "last_update TIMESTAMP)"
+    )
+
+
+# 004 #18
+def test_render_schema_default_excludes_views(settings):
+    text = render_schema(fetch_schema(settings), fetch_foreign_keys(settings))
+    assert ("VIEW " in text) is False
