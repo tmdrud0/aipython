@@ -1,7 +1,7 @@
 # 002: SQL 안전성 관문 (`t2s/guard.py`)
 
 - 대응 계획 단계: `docs/WORKFLOW.md` 의 "순수 함수(DB·LLM 불필요)" 단계. 이후 `db.py` 의 실행 경로가 이 함수를 반드시 통과하게 된다.
-- 선행 스펙: `specs/001-bootstrap.md` (PASS, `reviews/001-bootstrap.md`)
+- 선행 스펙: `docs/specs/001-bootstrap.md` (PASS, `docs/reviews/001-bootstrap.md`)
 - 예상 분량: 파일 3개(신규 2 / 수정 1), 약 220줄
 
 ## 목표
@@ -20,12 +20,12 @@ LLM 이 생성한 SQL 문자열을 실행 직전에 검사하는 순수 함수 `
 **수정**
 | 파일 | 무엇을 |
 |---|---|
-| `requirements.txt` | 마지막 줄 `pytest==9.1.1` 뒤에 **개행(LF) 하나만** 추가한다. `reviews/001-bootstrap.md` 의 [경미] 지적 사항이다. 내용·순서·버전은 한 글자도 바꾸지 마라. 이 파일에서 이것 외의 변경은 범위 이탈이다. |
+| `requirements.txt` | 마지막 줄 `pytest==9.1.1` 뒤에 **개행(LF) 하나만** 추가한다. `docs/reviews/001-bootstrap.md` 의 [경미] 지적 사항이다. 내용·순서·버전은 한 글자도 바꾸지 마라. 이 파일에서 이것 외의 변경은 범위 이탈이다. |
 
 **건드리지 말 것**
 - `t2s/config.py`, `tests/test_config.py` — 001 에서 검수 PASS 된 부분이다. 한 줄도 고치지 마라.
 - `t2s/__init__.py` — 0 바이트를 유지한다. `from .guard import ...` 같은 re-export 를 넣지 마라.
-- `docker/` 전체, `.env`, `.env.example`, `.gitignore`, `docs/WORKFLOW.md`, `readme.md`, `specs/`, `reviews/`
+- `docker/` 전체, `.env`, `.env.example`, `.gitignore`, `docs/WORKFLOW.md`, `readme.md`, `docs/specs/`, `docs/reviews/`
 
 ## 재사용할 기존 코드
 

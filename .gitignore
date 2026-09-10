@@ -6,3 +6,4 @@ docker/initdb/02-data.sql
 __pycache__/
 *.pyc
 .env
+.claude/

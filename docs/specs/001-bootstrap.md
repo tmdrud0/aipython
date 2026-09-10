@@ -29,7 +29,7 @@
 - `docker/` 전체 — 컨테이너는 이미 완료 상태다. `docker-compose.yml`, `initdb/*.sql`, `fetch_sakila.ps1` 모두 수정 금지.
 - `docs/WORKFLOW.md` — 진행 상황 표 갱신은 사람이 커밋 단계에서 한다.
 - `.gitignore` — `.venv/`, `__pycache__/`, `*.pyc`, `.env` 가 이미 들어 있다. 추가하지 마라.
-- `specs/`, `reviews/`, `readme.md`
+- `docs/specs/`, `docs/reviews/`, `readme.md`
 
 ## 재사용할 기존 코드
 

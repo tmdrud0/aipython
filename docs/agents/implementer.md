@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: "[구현 세션 전용] specs/ 의 명세를 코드로 옮기는 구현 규칙 문서. 구현을 담당하는 LLM 백엔드 세션이 직접 읽는다. 설계·검수 세션(예: Claude)에서는 이 에이전트를 spawn 하지 마라 — 구현은 구현 세션이 한다."
+description: "[구현 세션 전용] docs/specs/ 의 명세를 코드로 옮기는 구현 규칙 문서. 구현을 담당하는 LLM 백엔드 세션이 직접 읽는다. 설계·검수 세션(예: Claude)에서는 이 에이전트를 spawn 하지 마라 — 구현은 구현 세션이 한다."
 ---
 
 # 구현 에이전트 지침
@@ -8,13 +8,13 @@ description: "[구현 세션 전용] specs/ 의 명세를 코드로 옮기는 �
 이 저장소에서 **구현을 담당하는 세션**이 지키는 규칙이다.
 설계와 검수는 Claude 쪽에서 이미 끝났다. **너는 명세를 코드로 옮기고, 직접 돌려서 확인한다.**
 
-전체 흐름은 [docs/WORKFLOW.md](../../docs/WORKFLOW.md) 참고.
+전체 흐름은 [docs/WORKFLOW.md](../WORKFLOW.md) 참고.
 
 ---
 
 ## 1. 시작
 
-1. 지시받은 `specs/NNN-<slug>.md` 를 **끝까지** 읽는다.
+1. 지시받은 `docs/specs/NNN-<slug>.md` 를 **끝까지** 읽는다.
 2. 스펙의 "재사용할 기존 코드" 에 적힌 파일을 먼저 읽는다.
 3. "파일별 계약" 과 "수용 기준" 을 다시 읽는다. 이 둘이 네가 맞춰야 할 정답이다.
 
@@ -68,7 +68,7 @@ docker compose -f docker/docker-compose.yml up -d
 ## 5. 완료 보고 형식
 
 ```
-## 구현 완료: specs/NNN-<slug>.md
+## 구현 완료: docs/specs/NNN-<slug>.md
 
 ### 변경한 파일
 - 신규: ...
